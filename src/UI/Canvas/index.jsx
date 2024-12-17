@@ -44,16 +44,42 @@ const Canvas = () => {
   };
 
   // Función para dibujar la cuadrícula
+  const color = (active) => {
+    return active ? 'rgb(255, 255, 255)' : 'rgba(211, 211, 211, 0.48)';
+  }
+
   const drawGrid = (ctx, grid) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Limpiar canvas
     grid.forEach((rows) => {
       rows.forEach((cell) => {
         ctx.beginPath();
         ctx.moveTo(cell.xOrigin, cell.yOrigin);
-        ctx.lineTo(cell.xFinal, cell.yFinal);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "blue";
+        ctx.lineTo(cell.xFinal, cell.yOrigin);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color(cell.topMarked);
         ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(cell.xFinal, cell.yOrigin);
+        ctx.lineTo(cell.xFinal, cell.yFinal);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color(cell.rightMarked);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(cell.xOrigin, cell.yFinal);
+        ctx.lineTo(cell.xFinal, cell.yFinal);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color(cell.bottomMarked);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(cell.xOrigin, cell.yOrigin);
+        ctx.lineTo(cell.xOrigin, cell.yFinal);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color(cell.leftMarked);
+        ctx.stroke();
+
       });
     });
   };
@@ -95,7 +121,7 @@ const Canvas = () => {
     <canvas
       ref={canvasRef}
       style={{
-        border: "3px solid white",
+        border: "5px solid white",
         display: "block",
         margin: "auto",
       }}
