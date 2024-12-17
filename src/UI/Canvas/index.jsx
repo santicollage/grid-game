@@ -19,7 +19,7 @@ const Canvas = () => {
     big: 10,
   };
 
-  // Función para crear la cuadrícula
+  // Function to create the grid
   const createGrid = (columns, rows = columns) => {
     const spacing = size / columns;
     const newGrid = [];
@@ -43,9 +43,12 @@ const Canvas = () => {
     return newGrid;
   };
 
-  // Función para dibujar la cuadrícula
+  // Function to draw the grid
   const color = (active) => {
     return active ? 'rgb(255, 255, 255)' : 'rgba(211, 211, 211, 0.48)';
+  }
+  const stroke = (active) => {
+    return active ? 5 : 2;
   }
 
   const drawGrid = (ctx, grid) => {
@@ -55,34 +58,85 @@ const Canvas = () => {
         ctx.beginPath();
         ctx.moveTo(cell.xOrigin, cell.yOrigin);
         ctx.lineTo(cell.xFinal, cell.yOrigin);
-        ctx.lineWidth = 3;
+        ctx.lineWidth = stroke(cell.topMarked);
         ctx.strokeStyle = color(cell.topMarked);
         ctx.stroke();
 
         ctx.beginPath();
         ctx.moveTo(cell.xFinal, cell.yOrigin);
         ctx.lineTo(cell.xFinal, cell.yFinal);
-        ctx.lineWidth = 3;
+        ctx.lineWidth = stroke(cell.rightMarked);
         ctx.strokeStyle = color(cell.rightMarked);
         ctx.stroke();
 
         ctx.beginPath();
         ctx.moveTo(cell.xOrigin, cell.yFinal);
         ctx.lineTo(cell.xFinal, cell.yFinal);
-        ctx.lineWidth = 3;
+        ctx.lineWidth = stroke(cell.bottomMarked);
         ctx.strokeStyle = color(cell.bottomMarked);
         ctx.stroke();
 
         ctx.beginPath();
         ctx.moveTo(cell.xOrigin, cell.yOrigin);
         ctx.lineTo(cell.xOrigin, cell.yFinal);
-        ctx.lineWidth = 3;
+        ctx.lineWidth = stroke(cell.leftMarked);
         ctx.strokeStyle = color(cell.leftMarked);
         ctx.stroke();
 
       });
     });
   };
+
+  const handleClick = (event) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+    const spacing = size / sizeGrid[context.gridSize];
+
+    const activateLine = (row, column) => {
+      context.setGridCanvas((prevGrid) => {
+        const newGrid = [...prevGrid];
+
+        //distances to the diagonal of the square
+        const totalDistance1 = (clickX - newGrid[row][column].xOrigin) + (clickY - newGrid[row][column].yOrigin);
+        const totalDistance2 = (newGrid[row][column].xFinal - clickX) + (clickY - newGrid[row][column].yOrigin);        
+
+        if (totalDistance1 < spacing && totalDistance2 < spacing) {
+          if(row > 0) {
+            newGrid[row - 1][column].bottomMarked = true;
+          }
+          newGrid[row][column].topMarked = true;
+        } else if (totalDistance1 > spacing && totalDistance2 < spacing) {
+          if(column < sizeGrid[context.gridSize]) {
+            newGrid[row][column + 1].leftMarked = true;
+          }
+          newGrid[row][column].rightMarked = true;
+        } else if (totalDistance1 > spacing && totalDistance2 > spacing) {
+          if(row < sizeGrid[context.gridSize]) {
+            newGrid[row + 1][column].topMarked = true;
+          }
+          newGrid[row][column].bottomMarked = true;
+        } else if (totalDistance1 < spacing && totalDistance2 > spacing) {
+          if(column > 0) {
+            newGrid[row][column - 1].rightMarked = true;
+          }
+          newGrid[row][column].leftMarked = true;
+        } 
+
+        return newGrid;
+      })
+    }
+    
+    //Find the square where it was clicked
+    context.gridCanvas.forEach((rows, row) => {
+      rows.forEach((cell, column) => {
+        if (clickX - cell.xOrigin > 0 && clickY - cell.yOrigin > 0 && clickX - cell.xFinal < 0 && clickY - cell.yFinal < 0) {
+          activateLine(row, column);
+        }
+      })
+    })
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -97,7 +151,7 @@ const Canvas = () => {
       canvas.width = size;
       canvas.height = size;
 
-      const grid = createGrid(sizeGrid[context.gridSize || "small"]);
+      const grid = createGrid(sizeGrid[context.gridSize]);
       context.setGridCanvas(grid);
     };
 
@@ -107,7 +161,7 @@ const Canvas = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [context.gridSize]);
 
-  // Dibujar el grid cuando context.gridCanvas cambia
+  // Draw the grid when context.gridCanvas changes
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -120,6 +174,7 @@ const Canvas = () => {
   return (
     <canvas
       ref={canvasRef}
+      onClick={handleClick}
       style={{
         border: "5px solid white",
         display: "block",
