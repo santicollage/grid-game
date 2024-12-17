@@ -1,0 +1,53 @@
+@import '../../_variables.scss';
+
+.title {
+  text-shadow: 4px 4px 8px $primary-color;
+  margin-bottom: 20px;
+}
+
+.players-select {
+  @include button-style;
+}
+.players-select:focus {
+  outline: none;
+}
+
+.players-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 10px;
+
+  input::placeholder {
+    color: rgba(255, 255, 255, 0.662)
+  }
+  .player-1 {
+    @include players-style($player-1);
+  }
+  .player-2 {
+    @include players-style($player-2);
+  }
+  .player-3 {
+    @include players-style($player-3);
+  }
+  .player-4 {
+    @include players-style($player-4);
+  }
+}
+
+.label-size {
+  font-size: 2rem
+}
+
+.size-select {
+  @include button-style;
+}
+.size-select:focus {
+  outline: none;
+}
+
+.button-start {
+  @include button-style;
+  font-size: 2.5rem;
+  margin: 22px;
+}
