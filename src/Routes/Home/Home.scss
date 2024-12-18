@@ -7,6 +7,7 @@
 
 .players-select {
   @include button-style;
+  border: none;
 }
 .players-select:focus {
   outline: none;
@@ -41,6 +42,7 @@
 
 .size-select {
   @include button-style;
+  border: none;
 }
 .size-select:focus {
   outline: none;

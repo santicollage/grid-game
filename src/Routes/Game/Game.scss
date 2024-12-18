@@ -7,4 +7,60 @@
   @media (max-width: 768px) {
     flex-direction: column;
   }
+
+  .section-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+    .player-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 5px;
+      flex-wrap: wrap;
+      @media (max-width: 768px) {
+        flex-direction: row;
+      }
+
+      .player-1 {
+        @include players-style($player-1);
+      }
+      .player-2 {
+        @include players-style($player-2);
+      }
+      .player-3 {
+        @include players-style($player-3);
+      }
+      .player-4 {
+        @include players-style($player-4);
+      }
+      .player {
+        font-size: 0.6rem;
+        width: auto;
+        margin: 5px;
+        max-width: 115px;
+        .player-name {
+          margin-bottom: 5px;
+          white-space: nowrap;
+          overflow: hidden
+        }
+      }
+      .player-disabled {
+        border: solid 2px white;
+      }
+    }
+
+    .button-restart {
+      @include button-style;
+      font-size: 1.2rem;
+      height: 50px;
+      width: 135px;
+      @media (max-width: 768px) {
+        width: 70%;
+      }
+    }
+  }
 }

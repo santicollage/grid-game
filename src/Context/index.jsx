@@ -23,6 +23,8 @@ export const GameProvider = ({children}) => {
   //Canvas
   const [gridCanvas, setGridCanvas] = useState([]);
 
+  const [turn, setTurn] = useState(0);
+
 
   return (
     <GameContext.Provider value={{
@@ -33,7 +35,9 @@ export const GameProvider = ({children}) => {
       gridSize,
       setGridSize,
       gridCanvas,
-      setGridCanvas
+      setGridCanvas,
+      turn,
+      setTurn
     }}>
       {children}
     </GameContext.Provider>

@@ -32,10 +32,10 @@ const Canvas = () => {
           yOrigin: spacing * row,
           xFinal: spacing * (column + 1),
           yFinal: spacing * (row + 1),
-          topMarked: false,
-          rightMarked: false,
-          bottomMarked: false,
-          leftMarked: false,
+          topMarked: row == 0 ? true : false,
+          rightMarked: column == columns - 1 ? true : false,
+          bottomMarked: row == rows - 1 ? true : false,
+          leftMarked: column == 0 ? true : false,
         });
       }
       newGrid.push(currentRow);
@@ -94,34 +94,45 @@ const Canvas = () => {
     const clickY = event.clientY - rect.top;
     const spacing = size / sizeGrid[context.gridSize];
 
+    console.log(context.turn);
+    
+
     const activateLine = (row, column) => {
       context.setGridCanvas((prevGrid) => {
         const newGrid = [...prevGrid];
 
         //distances to the diagonal of the square
         const totalDistance1 = (clickX - newGrid[row][column].xOrigin) + (clickY - newGrid[row][column].yOrigin);
-        const totalDistance2 = (newGrid[row][column].xFinal - clickX) + (clickY - newGrid[row][column].yOrigin);        
+        const totalDistance2 = (newGrid[row][column].xFinal - clickX) + (clickY - newGrid[row][column].yOrigin); 
+
+        const updateTurn = () => {
+          context.setTurn((prevTurn) => prevTurn == context.players.length - 1 ? 0 : prevTurn + 1);
+        }       
 
         if (totalDistance1 < spacing && totalDistance2 < spacing) {
+          !newGrid[row][column].topMarked && updateTurn();
+          newGrid[row][column].topMarked = true;
           if(row > 0) {
             newGrid[row - 1][column].bottomMarked = true;
           }
-          newGrid[row][column].topMarked = true;
         } else if (totalDistance1 > spacing && totalDistance2 < spacing) {
-          if(column < sizeGrid[context.gridSize]) {
+          !newGrid[row][column].rightMarked && updateTurn();
+          newGrid[row][column].rightMarked = true;
+          if(column < sizeGrid[context.gridSize] - 1) {
             newGrid[row][column + 1].leftMarked = true;
           }
-          newGrid[row][column].rightMarked = true;
         } else if (totalDistance1 > spacing && totalDistance2 > spacing) {
-          if(row < sizeGrid[context.gridSize]) {
+          !newGrid[row][column].bottomMarked && updateTurn();
+          newGrid[row][column].bottomMarked = true;
+          if(row < sizeGrid[context.gridSize] - 1) {
             newGrid[row + 1][column].topMarked = true;
           }
-          newGrid[row][column].bottomMarked = true;
         } else if (totalDistance1 < spacing && totalDistance2 > spacing) {
+          !newGrid[row][column].leftMarked && updateTurn();
+          newGrid[row][column].leftMarked = true;
           if(column > 0) {
             newGrid[row][column - 1].rightMarked = true;
           }
-          newGrid[row][column].leftMarked = true;
         } 
 
         return newGrid;
@@ -136,6 +147,7 @@ const Canvas = () => {
         }
       })
     })
+    
   }
 
   useEffect(() => {
