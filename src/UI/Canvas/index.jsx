@@ -352,9 +352,10 @@ const Canvas = () => {
     }
 
     context.players.forEach((player) => {
-      if(player.points > (sizeGrid[context.gridSize] * sizeGrid[context.gridSize] * 10 / context.selectedPlayers)) {
-        console.log('win');
-        
+      if(player.points > (sizeGrid[context.gridSize] * sizeGrid[context.gridSize] * 10 / 2)) {
+        context.setShowWinner(true);        
+      } else if (context.gridCanvas.flat().every((cell) => cell.fill == true)) {
+        context.setShowWinner(true);
       }
     })
   }, [context.gridCanvas]);

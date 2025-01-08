@@ -2,21 +2,47 @@
 
 .message-container {
   position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 70vw;
-  height: 60vh;
+  height: auto;
   background-color: $primary-color;
+  padding: 20px;
+  border-radius: 20px;
+  text-align: center;
 
   .message-title {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    color: $secondary-color;
+    @media (max-width: 768px) {
+      font-size: 2rem;
+    }
   }
 
   .message-text {
-    font-size: 1.2rem;
+    font-size: 1rem;
+    margin-left: 20px;
     margin-bottom: 10px;
+    @media (max-width: 768px) {
+      font-size: 0.8rem;
+    }
+  }
+
+  .message-winner {
+    font-size: 3rem;
+    margin-left: 20px;
+    margin-bottom: 10px;
+    @media (max-width: 768px) {
+      font-size: 2rem;
+    }
   }
 
   .button-restart {
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-55%);
     @include button-style;
     font-size: 1.2rem;
     height: 50px;
