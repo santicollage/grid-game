@@ -1,10 +1,9 @@
-import { useEffect, useRef, useContext } from "react";
+import { useEffect, useRef, useContext,  useState } from "react";
 import { GameContext } from "../../Context";
-import { useNavigate } from "react-router-dom";
 
 const Canvas = () => {
   const context = useContext(GameContext);
-  const navigate = useNavigate();
+  const [pendingAction, setPendingAction] = useState(null);
 
   const canvasRef = useRef(null);
 
@@ -18,24 +17,33 @@ const Canvas = () => {
     middle: 8,
     big: 10,
   };
+  
+  const colors = [
+    '#E7FF17',
+    '#3EFF17',
+    '#172AFF',
+    '#FF171B'
+  ];
 
   // Function to create the grid
   const createGrid = (columns, rows = columns) => {
-    const spacing = size / columns;
+    const spacing = (size - 10) / columns;
     const newGrid = [];
 
     for (let row = 0; row < rows; row++) {
       const currentRow = [];
       for (let column = 0; column < columns; column++) {
         currentRow.push({
-          xOrigin: spacing * column,
-          yOrigin: spacing * row,
-          xFinal: spacing * (column + 1),
-          yFinal: spacing * (row + 1),
-          topMarked: row == 0 ? true : false,
-          rightMarked: column == columns - 1 ? true : false,
-          bottomMarked: row == rows - 1 ? true : false,
-          leftMarked: column == 0 ? true : false,
+          xOrigin: spacing * column + 5,
+          yOrigin: spacing * row  + 5,
+          xFinal: spacing * (column + 1) + 5,
+          yFinal: spacing * (row + 1) + 5,
+          topMarked: false,
+          rightMarked: false,
+          bottomMarked: false,
+          leftMarked: false,
+          fill: false,
+          color: 'rgba(211, 211, 211, 0.48)',
         });
       }
       newGrid.push(currentRow);
@@ -43,7 +51,7 @@ const Canvas = () => {
     return newGrid;
   };
 
-  // Function to draw the grid
+  // Define the thickness and color of the line
   const color = (active) => {
     return active ? 'rgb(255, 255, 255)' : 'rgba(211, 211, 211, 0.48)';
   }
@@ -51,10 +59,17 @@ const Canvas = () => {
     return active ? 5 : 2;
   }
 
+  // Function to draw the grid
   const drawGrid = (ctx, grid) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Limpiar canvas
     grid.forEach((rows) => {
       rows.forEach((cell) => {
+        
+        if(cell.fill) {
+          ctx.fillStyle = cell.color;
+          ctx.fillRect(cell.xOrigin, cell.yOrigin, cell.xFinal - cell.xOrigin, cell.yFinal - cell.yOrigin);
+        }
+
         ctx.beginPath();
         ctx.moveTo(cell.xOrigin, cell.yOrigin);
         ctx.lineTo(cell.xFinal, cell.yOrigin);
@@ -87,56 +102,86 @@ const Canvas = () => {
     });
   };
 
+  // Function to update the turn
+  const updateTurn = () => {
+    context.setTurn((prevTurn) => prevTurn == context.players.length - 1 ? 0 : prevTurn + 1);   
+  }  
+
+  // Function to update the points
+  const updatePoints = (grid, turn) => {
+    const points = grid.flat().filter((cell) => cell.fill).length - context.gridCanvas.flat().filter((cell) => cell.fill).length;
+    context.players[turn].points += points * 10;
+    context.setGridCanvas(grid);
+  }
+
+  // Function that handles the click of the line
   const handleClick = (event) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const clickX = event.clientX - rect.left;
     const clickY = event.clientY - rect.top;
-    const spacing = size / sizeGrid[context.gridSize];
+    const spacing = size / sizeGrid[context.gridSize];    
 
-    console.log(context.turn);
-    
+    const activateLine = (row, column) => { 
+      //distances to the diagonal of the square
+      const totalDistance1 = (clickX - context.gridCanvas[row][column].xOrigin) + (clickY - context.gridCanvas[row][column].yOrigin);
+      const totalDistance2 = (context.gridCanvas[row][column].xFinal - clickX) + (clickY - context.gridCanvas[row][column].yOrigin);  
 
-    const activateLine = (row, column) => {
-      context.setGridCanvas((prevGrid) => {
-        const newGrid = [...prevGrid];
-
-        //distances to the diagonal of the square
-        const totalDistance1 = (clickX - newGrid[row][column].xOrigin) + (clickY - newGrid[row][column].yOrigin);
-        const totalDistance2 = (newGrid[row][column].xFinal - clickX) + (clickY - newGrid[row][column].yOrigin); 
-
-        const updateTurn = () => {
-          context.setTurn((prevTurn) => prevTurn == context.players.length - 1 ? 0 : prevTurn + 1);
-        }       
-
-        if (totalDistance1 < spacing && totalDistance2 < spacing) {
-          !newGrid[row][column].topMarked && updateTurn();
-          newGrid[row][column].topMarked = true;
+      const updateGrid = (row, column, direction) => {
+        context.setGridCanvas((prevGrid) => {
+          let newGrid = structuredClone(prevGrid);
+          switch (direction) {
+            case 'top':
+              newGrid[row][column].topMarked = true;
+              break;
+            case 'right':
+              newGrid[row][column].rightMarked = true;
+              break;
+            case 'bottom':
+              newGrid[row][column].bottomMarked = true;
+              break;
+            case 'left':
+              newGrid[row][column].leftMarked = true;
+              break;
+          
+            default:
+              break;
+          }
+          return newGrid;
+        })
+        setPendingAction({ row, column, direction });
+      }
+      
+      if (totalDistance1 < spacing && totalDistance2 < spacing) {
+        if (!context.gridCanvas[row][column].topMarked && !context.gridCanvas[row][column].fill) {
           if(row > 0) {
-            newGrid[row - 1][column].bottomMarked = true;
+            updateGrid(row - 1, column, 'bottom');
           }
-        } else if (totalDistance1 > spacing && totalDistance2 < spacing) {
-          !newGrid[row][column].rightMarked && updateTurn();
-          newGrid[row][column].rightMarked = true;
+          updateGrid(row, column, 'top');
+        }
+      } else if (totalDistance1 > spacing && totalDistance2 < spacing) {
+        if (!context.gridCanvas[row][column].rightMarked && !context.gridCanvas[row][column].fill) {
           if(column < sizeGrid[context.gridSize] - 1) {
-            newGrid[row][column + 1].leftMarked = true;
+            updateGrid(row, column + 1, 'left');
           }
-        } else if (totalDistance1 > spacing && totalDistance2 > spacing) {
-          !newGrid[row][column].bottomMarked && updateTurn();
-          newGrid[row][column].bottomMarked = true;
+          updateGrid(row, column, 'right');
+          
+        }
+      } else if (totalDistance1 > spacing && totalDistance2 > spacing) {
+        if (!context.gridCanvas[row][column].bottomMarked && !context.gridCanvas[row][column].fill) {
           if(row < sizeGrid[context.gridSize] - 1) {
-            newGrid[row + 1][column].topMarked = true;
+            updateGrid(row + 1, column, 'top');
           }
-        } else if (totalDistance1 < spacing && totalDistance2 > spacing) {
-          !newGrid[row][column].leftMarked && updateTurn();
-          newGrid[row][column].leftMarked = true;
+          updateGrid(row, column, 'bottom');
+        }
+      } else if (totalDistance1 < spacing && totalDistance2 > spacing) {
+        if (!context.gridCanvas[row][column].leftMarked && !context.gridCanvas[row][column].fill) {
           if(column > 0) {
-            newGrid[row][column - 1].rightMarked = true;
+            updateGrid(row, column - 1, 'right');
           }
-        } 
-
-        return newGrid;
-      })
+          updateGrid(row, column, 'left');
+        }
+      }
     }
     
     //Find the square where it was clicked
@@ -150,6 +195,123 @@ const Canvas = () => {
     
   }
 
+  // Function that rectifies if points are achieved
+  const rectifyPoints = (row, column, direction) => {
+
+    let grid = structuredClone(context.gridCanvas);
+
+    const fillSquare = (rowPartial, columnPartial, direction) => {
+
+      grid[rowPartial][columnPartial].fill = true;
+      grid[rowPartial][columnPartial].color = colors[context.turn];
+
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      
+      if((rowPartial + 1 == grid.length && !grid[rowPartial][columnPartial].bottomMarked)
+        || (columnPartial + 1 == grid.length && !grid[rowPartial][columnPartial].rightMarked) 
+        || (rowPartial - 1 < 0 && !grid[rowPartial][columnPartial].topMarked) 
+        || (columnPartial - 1 < 0 && !grid[rowPartial][columnPartial].leftMarked)) {
+        return false;
+      } else if((grid[rowPartial][columnPartial].rightMarked || grid[rowPartial][columnPartial + 1].fill) && 
+      (grid[rowPartial][columnPartial].bottomMarked || grid[rowPartial  + 1][columnPartial].fill) &&
+      (grid[rowPartial][columnPartial].leftMarked || grid[rowPartial][columnPartial - 1].fill) &&
+      (grid[rowPartial][columnPartial].topMarked || grid[rowPartial - 1][columnPartial].fill)) {  
+        return true;
+      }
+      
+      let allValid = true;
+
+      switch (direction) {
+          case 'top':
+              if (!grid[rowPartial][columnPartial].rightMarked && !grid[rowPartial][columnPartial + 1].fill) {
+                  allValid = allValid && fillSquare(rowPartial, columnPartial + 1, 'left');
+              }
+              if (!grid[rowPartial][columnPartial].bottomMarked && !grid[rowPartial + 1][columnPartial].fill) {
+                  allValid = allValid && fillSquare(rowPartial + 1, columnPartial, 'top');
+              }
+              if (!grid[rowPartial][columnPartial].leftMarked && !grid[rowPartial][columnPartial - 1].fill) {
+                  allValid = allValid && fillSquare(rowPartial, columnPartial - 1, 'right');
+              }
+              break;
+  
+          case 'right':
+              if (!grid[rowPartial][columnPartial].leftMarked && !grid[rowPartial][columnPartial - 1].fill) {
+                  allValid = allValid && fillSquare(rowPartial, columnPartial - 1, 'right');
+              }
+              if (!grid[rowPartial][columnPartial].topMarked && !grid[rowPartial - 1][columnPartial].fill) {
+                  allValid = allValid && fillSquare(rowPartial - 1, columnPartial, 'bottom');
+              }
+              if (!grid[rowPartial][columnPartial].bottomMarked && !grid[rowPartial + 1][columnPartial].fill) {
+                  allValid = allValid && fillSquare(rowPartial + 1, columnPartial, 'top');
+              }
+              break;
+  
+          case 'bottom':
+              if (!grid[rowPartial][columnPartial].rightMarked && !grid[rowPartial][columnPartial + 1].fill) {
+                  allValid = allValid && fillSquare(rowPartial, columnPartial + 1, 'left');
+              }
+              if (!grid[rowPartial][columnPartial].topMarked && !grid[rowPartial - 1][columnPartial].fill) {
+                  allValid = allValid && fillSquare(rowPartial - 1, columnPartial, 'bottom');
+              }
+              if (!grid[rowPartial][columnPartial].leftMarked && !grid[rowPartial][columnPartial - 1].fill) {
+                  allValid = allValid && fillSquare(rowPartial, columnPartial - 1, 'right');
+              }
+              break;
+  
+          case 'left':
+              if (!grid[rowPartial][columnPartial].rightMarked && !grid[rowPartial][columnPartial + 1].fill) {
+                  allValid = allValid && fillSquare(rowPartial, columnPartial + 1, 'left');
+              }
+              if (!grid[rowPartial][columnPartial].bottomMarked && !grid[rowPartial + 1][columnPartial].fill) {
+                  allValid = allValid && fillSquare(rowPartial + 1, columnPartial, 'top');
+              }
+              if (!grid[rowPartial][columnPartial].topMarked && !grid[rowPartial - 1][columnPartial].fill) {
+                  allValid = allValid && fillSquare(rowPartial - 1, columnPartial, 'bottom');
+              }
+              break;
+  
+          default:
+              break;
+      }
+
+      return allValid;
+    }
+    
+    let firstIteration = fillSquare(row, column, direction);
+
+    if(firstIteration) {
+      updatePoints(grid, context.turn);
+      return;
+    } else {
+      grid = structuredClone(context.gridCanvas);
+      let secondIteration;
+  
+      switch (direction) {
+        case 'top':
+          if(row > 0) secondIteration = fillSquare(row - 1, column, 'bottom');
+          break;
+        case 'right':
+          if(column < sizeGrid[context.gridSize] - 1) secondIteration = fillSquare(row, column + 1, 'left');
+          break;
+        case 'bottom':
+          if(row < sizeGrid[context.gridSize] - 1) secondIteration = fillSquare(row + 1, column, 'top');
+          break;
+        case 'left':
+          if(column > 0) secondIteration = fillSquare(row, column - 1, 'right');
+          break;
+      
+        default:
+          break;
+      }
+      if(secondIteration) {
+        updatePoints(grid, context.turn);
+        return;
+      }      
+    }
+  }
+
+  // Function that handles resize
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -181,6 +343,20 @@ const Canvas = () => {
     if (context.gridCanvas) {
       drawGrid(ctx, context.gridCanvas);
     }
+
+    if (pendingAction) {
+      const { row, column, direction } = pendingAction;
+      rectifyPoints(row, column, direction);
+      setPendingAction(null);
+      updateTurn();
+    }
+
+    context.players.forEach((player) => {
+      if(player.points > (sizeGrid[context.gridSize] * sizeGrid[context.gridSize] * 10 / context.selectedPlayers)) {
+        console.log('win');
+        
+      }
+    })
   }, [context.gridCanvas]);
 
   return (
@@ -188,9 +364,10 @@ const Canvas = () => {
       ref={canvasRef}
       onClick={handleClick}
       style={{
-        border: "5px solid white",
+        border: "none",
         display: "block",
         margin: "auto",
+        backdropFilter: "blur(5px)",
       }}
     />
   );

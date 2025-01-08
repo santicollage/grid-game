@@ -1,0 +1,28 @@
+@import '../../_variables.scss';
+
+.message-container {
+  position: absolute;
+  width: 70vw;
+  height: 60vh;
+  background-color: $primary-color;
+
+  .message-title {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+
+  .message-text {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+  }
+
+  .button-restart {
+    @include button-style;
+    font-size: 1.2rem;
+    height: 50px;
+    width: 135px;
+    @media (max-width: 768px) {
+      width: 70%;
+    }
+  }
+}

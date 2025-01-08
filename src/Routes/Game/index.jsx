@@ -1,31 +1,31 @@
-import { useContext, useState } from "react"
+import { useContext } from "react"
 import { GameContext } from "../../Context"
 import {Canvas} from "../../UI/Canvas"
+import {Message} from "../../UI/Message"
 import './Game.scss'
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"
+
 
 function Game() {
   const context = useContext(GameContext);
   const navigate = useNavigate();
   
+    const restart = () => {
+      context.setSelectedPlayers(2);
   
-  const restart = () => {
-    context.setSelectedPlayers(2);
-
-    const updatedPlayers = Array.from({ length: context.selectedPlayers }, (player, i) => ({
-      id: i + 1,
-      name: `Player ${i + 1}`,
-      points: 0,
-    }));
-    context.setPlayers(updatedPlayers);
-
-    context.setGridSize('middle');
-
-    context.setTurn(0);
-
-    navigate('/');
-  }
-
+      const updatedPlayers = Array.from({ length: context.selectedPlayers }, (player, i) => ({
+        id: i + 1,
+        name: `Player ${i + 1}`,
+        points: 0,
+      }));
+      context.setPlayers(updatedPlayers);
+      context.setGridSize('middle');
+      context.setTurn(0);
+      context.setShowMessage(true);
+      context.setShowWinner(false);
+      navigate('/');
+    }
+  
   return (
     <>
       <div className="game-container">
@@ -48,6 +48,10 @@ function Game() {
           </div>
 
         <Canvas></Canvas>
+
+        {(context.showMessage || context.showWinner) && (
+          <Message/>
+        )}
       </div>
     </>
   )

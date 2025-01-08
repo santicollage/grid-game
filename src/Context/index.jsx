@@ -3,6 +3,7 @@ import { createContext, useEffect, useState } from 'react';
 export const GameContext = createContext();
 
 export const GameProvider = ({children}) => {
+
   //number of players
   const [selectedPlayers, setSelectedPlayers] = useState(2);
 
@@ -25,6 +26,9 @@ export const GameProvider = ({children}) => {
 
   const [turn, setTurn] = useState(0);
 
+  const [showMessage, setShowMessage] = useState(true);
+
+  const [showWinner, setShowWinner] = useState(false);
 
   return (
     <GameContext.Provider value={{
@@ -37,7 +41,11 @@ export const GameProvider = ({children}) => {
       gridCanvas,
       setGridCanvas,
       turn,
-      setTurn
+      setTurn,
+      showMessage,
+      setShowMessage,
+      showWinner,
+      setShowWinner
     }}>
       {children}
     </GameContext.Provider>
