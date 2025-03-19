@@ -20,6 +20,9 @@ $player-4: #FF171B;
   text-align: center; 
   cursor: pointer;
   box-shadow: 6px 6px 1px #ca4e00e7;
+  &:hover {
+    background-color: $primary-color;
+  }
 }
 
 @mixin players-style($color) {

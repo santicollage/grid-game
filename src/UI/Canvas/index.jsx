@@ -326,7 +326,7 @@ const Canvas = () => {
       canvas.height = size;
 
       const grid = createGrid(sizeGrid[context.gridSize]);
-      context.setGridCanvas(grid);
+      context.setGridCanvas(grid); 
     };
 
     handleResize();
@@ -353,9 +353,9 @@ const Canvas = () => {
 
     context.players.forEach((player) => {
       if(player.points > (sizeGrid[context.gridSize] * sizeGrid[context.gridSize] * 10 / 2)) {
-        context.setShowWinner(true);        
-      } else if (context.gridCanvas.flat().every((cell) => cell.fill == true)) {
         context.setShowWinner(true);
+      } else if (context.gridCanvas.length != 0 && context.gridCanvas.flat().every((cell) => cell.fill == true)) {
+        context.setShowWinner(true); 
       }
     })
   }, [context.gridCanvas]);
